@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 쪽지정보 처리 SQL -->
+<mapper namespace="com.example.community.dao.NoteMapper">
+
+<!-- 쪽지 쓰기 시작 -->
+<insert id="noteWrite" parameterType="note">
+	insert into
+		note_tb(
+			note_no
+			,send_id
+			,recv_id
+			,note_title
+			,note_content
+		)values(
+			note_seq.nextval
+			,#{send_id}
+			,#{recv_id}
+			,#{note_title}
+			,#{note_content}
+		)
+</insert>
+<!-- 쪽지 쓰기 종료 -->
+
+<!-- 보낸 쪽지 리스트 조회 시작 -->
+<select id="noteSendList" parameterType="string" resultType="hashmap">
+	select
+		n.note_no as note_no
+		,n.recv_id as recv_id
+		,m.member_nm as member_nm
+		,n.note_title as note_title
+		,DECODE(n.note_read,0,'未読',1,'既読') as note_read
+		,to_char(n.note_date,'yyyy-MM-dd HH24:MI:SS') as note_date
+		,n.note_type as note_type
+	from
+		note_tb n, member_tb m
+	where
+		n.recv_id = m.member_id
+	and
+		n.note_type = 0
+	and
+		n.send_id = #{send_id}
+	order by
+		n.note_date desc
+</select>
+<!-- 보낸 쪽지 리스트 조회 종료 -->
+
+<!-- 받은 쪽지 리스트 조회 시작 -->
+<select id="noteRecvList" parameterType="string" resultType="hashmap">
+	select
+		n.note_no as note_no
+		,n.send_id as send_id
+		,m.member_nm as member_nm
+		,n.note_title as note_title
+		,DECODE(n.note_read,0,'읽지않음',1,'읽음') as note_read
+		,to_char(n.note_date,'yyyy-MM-dd HH24:MI:SS') as note_date
+		,n.note_type as note_type
+	from
+		note_tb n, member_tb m
+	where
+		n.send_id = m.member_id
+	and
+		n.note_type = 0
+	and
+		n.recv_id = #{recv_id}
+	order by
+		n.note_date desc
+</select>
+<!-- 받은 쪽지 리스트 조회 종료 -->
+
+<!-- 중요 쪽지 리스트 조회 시작 -->
+<select id="noteImpList" parameterType="string" resultType="hashmap">
+	select
+		n.note_no as note_no
+		,n.send_id as send_id
+		,m.member_nm as member_nm
+		,n.note_title as note_title
+		,DECODE(n.note_read,0,'읽지않음',1,'읽음') as note_read
+		,to_char(n.note_date,'yyyy-MM-dd HH24:MI:SS') as note_date
+		,n.note_type as note_type
+	from
+		note_tb n, member_tb m
+	where
+		n.send_id = m.member_id
+	and
+		( 
+				n.recv_id = #{recv_id}
+			or
+				n.send_id = #{recv_id}
+		)
+	and
+		n.note_type = 1
+	order by
+		n.note_date desc
+</select>
+<!-- 중요 쪽지 리스트 조회 종료 -->
+
+<!-- 중요 체크 토글 기능 시작 -->
+<update id="changeImp" parameterType="note">
+	update
+		note_tb
+	set
+		note_type = #{note_type}
+	where
+		note_no = #{note_no}
+</update>
+<!-- 중요 체크 토글 기능 종료 -->
+
+<!-- 쪽지 읽기 기능 시작 -->
+<select id="noteSelectOne" parameterType="int" resultType="note">
+	select
+		note_no as note_no
+		,send_id as send_id
+		,recv_id as recv_id
+		,note_title as note_title
+		,note_content as note_content
+		,to_char(note_date,'yyyy-MM-dd HH24:MI:SS') as note_date
+		,note_type as note_type
+	from
+		note_tb
+	where
+		note_no = #{note_no}
+</select>
+<!-- 쪽지 읽기 기능 종료 -->
+
+<!-- 쪽지 읽기 처리 기능 시작 -->
+<update id="noteUpdateRead" parameterType="int">
+	update
+		note_tb
+	set
+		note_read = 1
+	where
+		note_no = #{note_no}
+</update>
+<!-- 쪽지 읽기 처리 기능 종료 -->
+</mapper>
